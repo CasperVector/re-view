@@ -17,14 +17,6 @@
  }
 
  document.write("\n");
- var base = new nfae_base(nfae);
- dbg1(dict_keys(base.nfae.states).map(function(s) {
-  var d = {};
-  d[s] = base.fa_ecloses([s], PHASE_OLD);
-  return d;
- }));
-
- document.write("\n");
  var maker2 = new nfa_maker(nfae), nfa;
  while (true) {
   var result = maker2.iter();

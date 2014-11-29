@@ -203,22 +203,6 @@ var nfae_base = function(nfae) {
  this.fa_transit = function(sids, c, ph) {
   return array_from_set(this.fa_transit_base(sids, c, ph, false));
  };
-
- this.fa_eclose = function(s, ph) {
-  var ret = new HashSet(), dif = new HashSet();
-  dif.add(s);
-  while (!dif.isEmpty()) {
-   ret = ret.union(dif);
-   dif = this.fa_transit_base(dif.values(), "", ph, true).complement(ret);
-  };
-  return array_from_set(ret);
- };
-
- this.fa_ecloses = function(sids, ph) {
-  var that = this, ret = new HashSet();
-  sids.map(function(s) { ret.addAll(that.fa_eclose(s, ph)); });
-  return array_from_set(ret);
- };
 };
 
 var nfa_maker = function(nfae) {
@@ -241,6 +225,22 @@ var nfa_maker = function(nfae) {
   fa_phase(this.nfa, PHASE_NEW);
  };
 
+ this.fa_eclose = function(s, ph) {
+  var base = this.base, ret = new HashSet(), dif = new HashSet();
+  dif.add(s);
+  while (!dif.isEmpty()) {
+   ret = ret.union(dif);
+   dif = base.fa_transit_base(dif.values(), "", ph, true).complement(ret);
+  };
+  return array_from_set(ret);
+ };
+
+ this.fa_ecloses = function(sids, ph) {
+  var that = this, ret = new HashSet();
+  sids.map(function(s) { ret.addAll(that.fa_eclose(s, ph)); });
+  return array_from_set(ret);
+ };
+
  this.add_zid = function(z, ph) {
   var ss = this.nfa["states"];
   if (!dict_has(this.zids, z)) {
@@ -253,7 +253,7 @@ var nfa_maker = function(nfae) {
  this.prepare_cur = function(sids) {
   var base = this.base, cur = this.cur;
   cur["idx"] = 0;
-  cur["sids"] = base.fa_ecloses(sids, PHASE_CUR);
+  cur["sids"] = this.fa_ecloses(sids, PHASE_CUR);
   var z = sids_zip(cur["sids"]);
   this.add_zid(z, PHASE_CUR);
   cur["zid"] = z;
@@ -261,7 +261,7 @@ var nfa_maker = function(nfae) {
 
   var ss = base.nfae["states"];
   cur["transit"] = [];
-  base.fa_ecloses(sids, PHASE_CUR).map(function(s) {
+  this.fa_ecloses(sids, PHASE_CUR).map(function(s) {
    dict_keys(ss[s]["transit"]).map(function(c) {
     var dests = dict_keys(ss[s]["transit"][c]);
     if (c != "") dests.map(function(d) {
@@ -283,13 +283,13 @@ var nfa_maker = function(nfae) {
   } else {
    this.refresh();
    if (cur["idx"] < cur["transit"].length) {
-    base.fa_ecloses(cur["sids"], PHASE_OLD);
+    this.fa_ecloses(cur["sids"], PHASE_OLD);
     this.add_zid(cur["zid"], PHASE_OLD);
 
     var tr1 = cur["transit"][cur["idx"]];
     var c = tr1["c"], dest = tr1["dest"];
     base.nfae["states"][tr1["src"]]["transit"][c][dest] = PHASE_CUR;
-    var z = sids_zip(base.fa_ecloses([dest], PHASE_CUR));
+    var z = sids_zip(this.fa_ecloses([dest], PHASE_CUR));
     this.add_zid(z, PHASE_CUR);
 
     var tr2 = this.nfa["states"][get_zid()]["transit"];
