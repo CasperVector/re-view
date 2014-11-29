@@ -60,6 +60,12 @@ where description of a state is
 where a transitition is
 
 ```
-{ character_of_transit: phase_of_transit }
+{ character_of_transitition: destinations }
+```
+
+where destinations is
+
+```
+{ state1: phase1, state2: phase2, ... }
 ```
 
