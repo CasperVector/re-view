@@ -32,7 +32,7 @@
  var maker3 = new dfa_maker(nfa), dfa;
  while (true) {
   var result = maker3.iter();
-  dbg1(result["nfae"]);
+  dbg1(result["nfa"]);
   dbg1(result["dfa"]);
   if (maker3.is_end()) {
    dfa = result["dfa"];
@@ -41,22 +41,22 @@
  }
 
  document.write("\n");
- var matcher1 = new tom_nfae_matcher(nfa);
+ var matcher1 = new tom_nfa_matcher(nfa);
  matcher1.init(str);
  while (true) {
   var result = matcher1.iter();
   dbg1([result["str"], result["status"]]);
-  dbg1(result["nfae"]);
+  dbg1(result["nfa"]);
   if (matcher1.is_end()) break;
  }
 
  document.write("\n");
- var matcher2 = new tom_nfae_matcher(dfa);
+ var matcher2 = new tom_nfa_matcher(dfa);
  matcher2.init(str);
  while (true) {
   var result = matcher2.iter();
   dbg1([result["str"], result["status"]]);
-  dbg1(result["nfae"]);
+  dbg1(result["nfa"]);
   if (matcher2.is_end()) break;
  }
 })();
