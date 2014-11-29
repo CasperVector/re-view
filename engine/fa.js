@@ -258,9 +258,10 @@ var nfa_maker = function(nfae) {
   var rBase = this.rBase, mBase = this.mBase, cur = this.cur;
   cur["idx"] = 0;
   cur["sids"] = this.fa_ecloses(sids, PHASE_CUR);
+
   var z = sids_zip(cur["sids"]);
-  mBase.add_zid(z, PHASE_CUR);
   cur["zid"] = z;
+  mBase.add_zid(z, PHASE_CUR);
   if (rBase.fa_is_accept(cur["sids"])) {
    mBase.nfa["accept"].push(mBase.zids[z]);
   }
@@ -333,11 +334,12 @@ var dfa_maker = function(nfa) {
   var rBase = this.rBase, mBase = this.mBase, cur = this.cur;
   cur["idx"] = 0;
   cur["sids"] = sids;
+  cur["cs"] = rBase.fa_avail_transit(sids);
   rBase.fa_phase_states(sids, PHASE_CUR);
-  cur["cs"] = rBase.fa_avail_transit(cur["sids"]);
-  var z = sids_zip(cur["sids"]);
-  mBase.add_zid(z, PHASE_CUR);
+
+  var z = sids_zip(sids);
   cur["zid"] = z;
+  mBase.add_zid(z, PHASE_CUR);
   if (rBase.fa_is_accept(cur["sids"])) mBase.nfa["accept"].push(mBase.zids[z]);
  };
 
