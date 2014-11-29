@@ -205,24 +205,37 @@ var nfa_run_base = function(nfa) {
  };
 };
 
-var nfa_maker = function(nfae) {
- this.rBase = new nfa_run_base(nfae);
+var nfa_make_base = function() {
  this.nfa = { "initial": null, "accept": [], "states": {} };
  this.zids = {};
- this.cur = { "zid": null, "sids": [], "transit": [], "idx": 0, };
  this.queue = [];
  this.alloc = new sid_alloc();
+
+ this.add_zid = function(z, ph) {
+  var ss = this.nfa["states"];
+  if (!dict_has(this.zids, z)) {
+   this.zids[z] = this.alloc.alloc();
+   if (this.nfa["initial"] != null) this.queue.push(z);
+   this.nfa["states"][this.zids[z]] = { "transit": {}, "phase": ph };
+  } else ss[this.zids[z]]["phase"] = ph;
+ };
+};
+
+var nfa_maker = function(nfae) {
+ this.rBase = new nfa_run_base(nfae);
+ this.mBase = new nfa_make_base();
+ this.cur = { "zid": null, "sids": [], "transit": [], "idx": 0, };
  this.phase = PHASE_NEW;
 
  this.is_end = function() { return this.phase == PHASE_OLD; };
 
  this.get_snapshot = function() {
-  return clone({ "nfae": this.rBase.nfa, "nfa": this.nfa });
+  return clone({ "nfae": this.rBase.nfa, "nfa": this.mBase.nfa });
  };
 
  this.refresh = function() {
   fa_phase(this.rBase.nfa, PHASE_NEW);
-  fa_phase(this.nfa, PHASE_NEW);
+  fa_phase(this.mBase.nfa, PHASE_NEW);
  };
 
  this.fa_eclose = function(s, ph) {
@@ -241,23 +254,16 @@ var nfa_maker = function(nfae) {
   return array_from_set(ret);
  };
 
- this.add_zid = function(z, ph) {
-  var ss = this.nfa["states"];
-  if (!dict_has(this.zids, z)) {
-   this.zids[z] = this.alloc.alloc();
-   if (this.nfa["initial"] != null) this.queue.push(z);
-   this.nfa["states"][this.zids[z]] = { "transit": {}, "phase": ph };
-  } else ss[this.zids[z]]["phase"] = ph;
- };
-
  this.prepare_cur = function(sids) {
-  var rBase = this.rBase, cur = this.cur;
+  var rBase = this.rBase, mBase = this.mBase, cur = this.cur;
   cur["idx"] = 0;
   cur["sids"] = this.fa_ecloses(sids, PHASE_CUR);
   var z = sids_zip(cur["sids"]);
-  this.add_zid(z, PHASE_CUR);
+  mBase.add_zid(z, PHASE_CUR);
   cur["zid"] = z;
-  if (rBase.fa_is_accept(cur["sids"])) this.nfa["accept"].push(this.zids[z]);
+  if (rBase.fa_is_accept(cur["sids"])) {
+   mBase.nfa["accept"].push(mBase.zids[z]);
+  }
 
   var ss = rBase.nfa["states"];
   cur["transit"] = [];
@@ -272,33 +278,33 @@ var nfa_maker = function(nfae) {
  };
 
  this.iter = function() {
-  var that = this, rBase = this.rBase, cur = this.cur;
-  var get_zid = function() { return that.zids[cur["zid"]]; };
+  var that = this, rBase = this.rBase, mBase = this.mBase, cur = this.cur;
+  var get_zid = function() { return mBase.zids[cur["zid"]]; };
 
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
-  else if (this.nfa["initial"] == null) {
+  else if (mBase.nfa["initial"] == null) {
    this.prepare_cur([rBase.nfa["initial"]]);
-   this.nfa["initial"] = get_zid();
+   mBase.nfa["initial"] = get_zid();
   } else {
    this.refresh();
    if (cur["idx"] < cur["transit"].length) {
     this.fa_ecloses(cur["sids"], PHASE_OLD);
-    this.add_zid(cur["zid"], PHASE_OLD);
+    mBase.add_zid(cur["zid"], PHASE_OLD);
 
     var tr1 = cur["transit"][cur["idx"]];
     var c = tr1["c"], dest = tr1["dest"];
     rBase.nfa["states"][tr1["src"]]["transit"][c][dest] = PHASE_CUR;
     var z = sids_zip(this.fa_ecloses([dest], PHASE_CUR));
-    this.add_zid(z, PHASE_CUR);
+    mBase.add_zid(z, PHASE_CUR);
 
-    var tr2 = this.nfa["states"][get_zid()]["transit"];
+    var tr2 = mBase.nfa["states"][get_zid()]["transit"];
     if (!dict_has(tr2, c)) tr2[c] = {};
-    tr2[c][this.zids[z]] = PHASE_CUR;
+    tr2[c][mBase.zids[z]] = PHASE_CUR;
 
     ++cur["idx"];
-   } else if (this.queue.length > 0) {
-    this.prepare_cur(sids_unzip(this.queue.shift()));
+   } else if (mBase.queue.length > 0) {
+    this.prepare_cur(sids_unzip(mBase.queue.shift()));
    } else this.phase = PHASE_OLD;
   }
 
@@ -308,73 +314,59 @@ var nfa_maker = function(nfae) {
 
 var dfa_maker = function(nfa) {
  this.rBase = new nfa_run_base(nfa);
- this.dfa = { "initial": null, "accept": [], "states": {} };
- this.zids = {};
+ this.mBase = new nfa_make_base();
  this.cur = { "zid": null, "sids": [], "cs": [], "idx": 0 };
- this.queue = [];
- this.alloc = new sid_alloc();
  this.phase = PHASE_NEW;
 
  this.is_end = function() { return this.phase == PHASE_OLD; };
 
  this.get_snapshot = function() {
-  return clone({ "nfa": this.rBase.nfa, "dfa": this.dfa });
+  return clone({ "nfa": this.rBase.nfa, "dfa": this.mBase.nfa });
  };
 
  this.refresh = function() {
   fa_phase(this.rBase.nfa, PHASE_NEW);
-  fa_phase(this.dfa, PHASE_NEW);
- };
-
- this.add_zid = function(z, ph) {
-  var ss = this.dfa["states"];
-  if (!dict_has(this.zids, z)) {
-   this.zids[z] = this.alloc.alloc();
-   if (this.dfa["initial"] != null) this.queue.push(z);
-   this.dfa["states"][this.zids[z]] = {
-    "transit": {}, "phase": ph
-   };
-  } else ss[this.zids[z]]["phase"] = ph;
+  fa_phase(this.mBase.nfa, PHASE_NEW);
  };
 
  this.prepare_cur = function(sids) {
-  var rBase = this.rBase, cur = this.cur;
+  var rBase = this.rBase, mBase = this.mBase, cur = this.cur;
   cur["idx"] = 0;
   cur["sids"] = sids;
   rBase.fa_phase_states(sids, PHASE_CUR);
   cur["cs"] = rBase.fa_avail_transit(cur["sids"]);
   var z = sids_zip(cur["sids"]);
-  this.add_zid(z, PHASE_CUR);
+  mBase.add_zid(z, PHASE_CUR);
   cur["zid"] = z;
-  if (rBase.fa_is_accept(cur["sids"])) this.dfa["accept"].push(this.zids[z]);
+  if (rBase.fa_is_accept(cur["sids"])) mBase.nfa["accept"].push(mBase.zids[z]);
  };
 
  this.iter = function() {
-  var that = this, rBase = this.rBase, cur = this.cur;
-  var get_zid = function() { return that.zids[cur["zid"]]; };
+  var that = this, rBase = this.rBase, mBase = this.mBase, cur = this.cur;
+  var get_zid = function() { return mBase.zids[cur["zid"]]; };
 
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
-  else if (this.dfa["initial"] == null) {
+  else if (mBase.nfa["initial"] == null) {
    this.prepare_cur([rBase.nfa["initial"]]);
-   this.dfa["initial"] = get_zid();
+   mBase.nfa["initial"] = get_zid();
   } else {
    this.refresh();
    if (cur["idx"] < cur["cs"].length) {
     rBase.fa_phase_states(cur["sids"], PHASE_OLD);
-    this.add_zid(cur["zid"], PHASE_OLD);
+    mBase.add_zid(cur["zid"], PHASE_OLD);
 
     var c = cur["cs"][cur["idx"]];
     var z = sids_zip(rBase.fa_transit(cur["sids"], c, PHASE_CUR));
-    this.add_zid(z, PHASE_CUR);
+    mBase.add_zid(z, PHASE_CUR);
 
-    var tr = this.dfa["states"][get_zid()]["transit"];
+    var tr = mBase.nfa["states"][get_zid()]["transit"];
     tr[c] = {};
-    tr[c][this.zids[z]] = PHASE_CUR;
+    tr[c][mBase.zids[z]] = PHASE_CUR;
 
     ++cur["idx"];
-   } else if (this.queue.length > 0) {
-    this.prepare_cur(sids_unzip(this.queue.shift()));
+   } else if (mBase.queue.length > 0) {
+    this.prepare_cur(sids_unzip(mBase.queue.shift()));
    } else this.phase = PHASE_OLD;
   }
 
