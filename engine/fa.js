@@ -169,6 +169,11 @@ var nfae_maker = function(ast) {
 var nfae_base = function(nfae) {
  this.nfae = clone(nfae);
 
+ this.fa_phase_states = function(sids, phase) {
+  var ss = this.nfae["states"];
+  sids.map(function(s) { ss[s]["phase"] = phase; });
+ };
+
  this.fa_is_accept = function(sids) {
   return array_and(this.nfae["accept"], sids).length > 0;
  };
@@ -178,7 +183,6 @@ var nfae_base = function(nfae) {
   sids.map(function(s) {
    ret.addAll(dict_keys(ss[s]["transit"]));
   });
-  ret.remove("");
   return ret.values().sort();
  };
 
@@ -188,6 +192,7 @@ var nfae_base = function(nfae) {
    var tr = ss[s0]["transit"][c];
    dict_keys(tr).map(function(s1) {
     ret.add(s1);
+    ss[s1]["phase"] = ph;
     tr[s1] = ph;
    });
    if (orig) ss[s0]["phase"] = ph;
@@ -335,7 +340,8 @@ var dfa_maker = function(nfae) {
  this.prepare_cur = function(sids) {
   var base = this.base, cur = this.cur;
   cur["idx"] = 0;
-  cur["sids"] = base.fa_ecloses(sids, PHASE_CUR);
+  cur["sids"] = sids;
+  base.fa_phase_states(sids, PHASE_CUR);
   cur["cs"] = base.fa_avail_transit(cur["sids"]);
   var z = sids_zip(cur["sids"]);
   this.add_zid(z, PHASE_CUR);
@@ -355,13 +361,11 @@ var dfa_maker = function(nfae) {
   } else {
    this.refresh();
    if (cur["idx"] < cur["cs"].length) {
-    base.fa_ecloses(cur["sids"], PHASE_OLD);
+    base.fa_phase_states(cur["sids"], PHASE_OLD);
     this.add_zid(cur["zid"], PHASE_OLD);
 
     var c = cur["cs"][cur["idx"]];
-    var z = sids_zip(base.fa_ecloses(base.fa_transit(
-     cur["sids"], c, PHASE_CUR
-    ), PHASE_CUR));
+    var z = sids_zip(base.fa_transit(cur["sids"], c, PHASE_CUR));
     this.add_zid(z, PHASE_CUR);
 
     var tr = this.dfa["states"][get_zid()]["transit"];
@@ -419,22 +423,23 @@ var tom_nfae_matcher = function(nfae) {
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else {
    if (cur["idx"] == -1) {
-    cur["sids"] = base.fa_ecloses([base.nfae["initial"]], PHASE_CUR);
+    cur["sids"] = [base.nfae["initial"]];
+    base.fa_phase_states(cur["sids"], PHASE_CUR);
     ++cur["idx"];
    } else if (cur["end"]) {
     this.refresh();
     this.phase = PHASE_OLD;
    } else {
     this.refresh();
-    base.fa_ecloses(cur["sids"], PHASE_OLD);
+    base.fa_phase_states(cur["sids"], PHASE_OLD);
     if (cur["idx"] >= this.str.length) cur["end"] = true;
     else if (!this.can_transit()) {
      cur["end"] = true;
      cur["fail"] = true;
     } else {
-     cur["sids"] = base.fa_ecloses(base.fa_transit(
+     cur["sids"] = base.fa_transit(
       cur["sids"], this.str[cur["idx"]], PHASE_CUR
-     ), PHASE_CUR);
+     );
     }
     ++cur["idx"];
    }
