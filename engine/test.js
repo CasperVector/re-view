@@ -25,19 +25,31 @@
  }));
 
  document.write("\n");
- var maker2 = new dfa_maker(nfae), dfa;
+ var maker2 = new nfa_maker(nfae), nfa;
  while (true) {
   var result = maker2.iter();
   dbg1(result["nfae"]);
-  dbg1(result["dfa"]);
+  dbg1(result["nfa"]);
   if (maker2.is_end()) {
+   nfa = result["nfa"];
+   break;
+  }
+ }
+
+ document.write("\n");
+ var maker3 = new dfa_maker(nfa), dfa;
+ while (true) {
+  var result = maker3.iter();
+  dbg1(result["nfae"]);
+  dbg1(result["dfa"]);
+  if (maker3.is_end()) {
    dfa = result["dfa"];
    break;
   }
  }
 
  document.write("\n");
- var matcher1 = new tom_nfae_matcher(nfae);
+ var matcher1 = new tom_nfae_matcher(nfa);
  matcher1.init(str);
  while (true) {
   var result = matcher1.iter();
