@@ -357,7 +357,7 @@ var tom_nfae_matcher = function(nfae) {
   return this.get_snapshot();
  };
 
- this.init();
+ this.init("");
 };
 
 var bt_nfae_matcher = function(nfae) {
