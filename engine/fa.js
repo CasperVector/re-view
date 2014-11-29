@@ -360,14 +360,4 @@ var tom_nfae_matcher = function(nfae) {
  this.init("");
 };
 
-var bt_nfae_matcher = function(nfae) {
- this.base = new nfae_base(nfae);
- this.str = "";
- this.phase = PHASE_NEW;
-
- this.is_end = function() { return this.phase == PHASE_OLD; };
- this.init = function(str) { this.str = str; };
- this.iter = function() { return {}; };
-};
-
 // -*- indent-tabs-mode: nil -*- vim:et:ts=1:sw=1
