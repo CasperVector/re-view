@@ -273,12 +273,12 @@ var dfa_maker = function(nfae) {
     base.fa_ecloses(cur["sids"], PHASE_OLD);
     this.add_zid(cur["zid"], PHASE_OLD);
 
+    var c = cur["cs"][cur["idx"]];
     var z = sids_zip(base.fa_ecloses(base.fa_transit(
-     cur["sids"], cur["cs"][cur["idx"]], PHASE_CUR
+     cur["sids"], c, PHASE_CUR
     ), PHASE_CUR));
     this.add_zid(z, PHASE_CUR);
 
-    var c = cur["cs"][cur["idx"]];
     var tr = this.dfa["states"][get_zid()]["transit"];
     tr[c] = {};
     tr[c][this.zids[z]] = PHASE_CUR;
@@ -295,18 +295,11 @@ var dfa_maker = function(nfae) {
 
 var tom_nfae_matcher = function(nfae) {
  this.base = new nfae_base(nfae);
- this.cur = null;
  this.str = null;
+ this.cur = null;
  this.phase = null;
 
- this.refresh = function() { fa_phase(this.base.nfae, PHASE_NEW); };
-
- this.init = function(str) {
-  this.refresh();
-  this.cur = { "idx": -1, "sids": [], "end": false, "fail": false };
-  this.str = str;
-  this.phase = PHASE_NEW;
- };
+ this.is_end = function() { return this.phase == PHASE_OLD; };
 
  this.get_snapshot = function() {
   return clone({
@@ -316,16 +309,23 @@ var tom_nfae_matcher = function(nfae) {
   });
  };
 
- this.is_end = function() { return this.phase == PHASE_OLD; };
+ this.refresh = function() { fa_phase(this.base.nfae, PHASE_NEW); };
+
+ this.init = function(str) {
+  this.str = str;
+  this.cur = { "idx": -1, "sids": [], "end": false, "fail": false };
+  this.phase = PHASE_NEW;
+  this.refresh();
+ };
+
+ this.is_match = function() {
+  return !this.cur["fail"] && this.base.fa_is_accept(this.cur["sids"]);
+ };
 
  this.can_transit = function() {
   return set_from_array(
    this.base.fa_avail_transit(this.cur["sids"])
   ).contains(this.str[this.cur["idx"]]);
- };
-
- this.is_match = function() {
-  return !this.cur["fail"] && this.base.fa_is_accept(this.cur["sids"]);
  };
 
  this.iter = function() {
