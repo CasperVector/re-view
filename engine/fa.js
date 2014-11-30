@@ -174,6 +174,10 @@ var nfa_run_base = function(nfa) {
   sids.map(function(s) { ss[s]["phase"] = phase; });
  };
 
+ this.fa_phase_transit = function(src, c, dest, ph) {
+  this.nfa["states"][src]["transit"][c][dest] = ph;
+ };
+
  this.fa_is_accept = function(s) {
   return array_has(this.nfa["accept"], s);
  };
@@ -307,7 +311,7 @@ var nfa_maker = function(nfae) {
 
     var tr1 = cur["transit"][cur["idx"]];
     var c = tr1["c"], dest = tr1["dest"];
-    rBase.nfa["states"][tr1["src"]]["transit"][c][dest] = PHASE_CUR;
+    rBase.fa_phase_transit(tr1["src"], c, dest, PHASE_CUR);
     var z = sids_zip(this.fa_eclose(dest, PHASE_CUR));
     mBase.add_zid(z, PHASE_CUR);
 
