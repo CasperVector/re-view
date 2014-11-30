@@ -227,7 +227,7 @@ var nfa_make_base = function() {
  this.queue = [];
  this.alloc = new sid_alloc();
 
- this.add_zid = function(z, ph) {
+ this.add_state = function(z, ph) {
   var ss = this.nfa["states"];
   if (!dict_has(this.zids, z)) {
    this.zids[z] = this.alloc.alloc();
@@ -281,7 +281,7 @@ var nfa_maker = function(nfae) {
 
    var z = sids_zip(cur["sids"]);
    cur["zid"] = z;
-   mBase.add_zid(z, PHASE_CUR);
+   mBase.add_state(z, PHASE_CUR);
    if (rBase.fa_are_accept(cur["sids"])) {
     mBase.nfa["accept"].push(mBase.zids[z]);
    }
@@ -307,13 +307,13 @@ var nfa_maker = function(nfae) {
    this.refresh();
    if (cur["idx"] < cur["transit"].length) {
     this.fa_ecloses(cur["sids"], PHASE_OLD);
-    mBase.add_zid(cur["zid"], PHASE_OLD);
+    mBase.add_state(cur["zid"], PHASE_OLD);
 
     var t = cur["transit"][cur["idx"]];
     var c = t["c"], dest = t["dest"];
     rBase.fa_phase_transit(t["src"], c, dest, PHASE_CUR);
     var z = sids_zip(this.fa_eclose(dest, PHASE_CUR));
-    mBase.add_zid(z, PHASE_CUR);
+    mBase.add_state(z, PHASE_CUR);
 
     var tr = mBase.nfa["states"][get_zid()]["transit"];
     if (!dict_has(tr, c)) tr[c] = {};
@@ -359,7 +359,7 @@ var dfa_maker = function(nfa) {
 
    var z = sids_zip(sids);
    cur["zid"] = z;
-   mBase.add_zid(z, PHASE_CUR);
+   mBase.add_state(z, PHASE_CUR);
    if (rBase.fa_are_accept(cur["sids"])) mBase.nfa["accept"].push(mBase.zids[z]);
   };
 
@@ -372,11 +372,11 @@ var dfa_maker = function(nfa) {
    this.refresh();
    if (cur["idx"] < cur["cs"].length) {
     rBase.fa_phase_states(cur["sids"], PHASE_OLD);
-    mBase.add_zid(cur["zid"], PHASE_OLD);
+    mBase.add_state(cur["zid"], PHASE_OLD);
 
     var c = cur["cs"][cur["idx"]];
     var z = sids_zip(rBase.fa_transit(cur["sids"], c, PHASE_CUR));
-    mBase.add_zid(z, PHASE_CUR);
+    mBase.add_state(z, PHASE_CUR);
 
     var tr = mBase.nfa["states"][get_zid()]["transit"];
     tr[c] = {};
