@@ -174,14 +174,22 @@ var nfa_run_base = function(nfa) {
   sids.map(function(s) { ss[s]["phase"] = phase; });
  };
 
- this.fa_is_accept = function(sids) {
+ this.fa_is_accept = function(s) {
+  return this.nfa["accept"].indexOf(s) != -1;
+ };
+
+ this.fa_are_accept = function(sids) {
   return array_and(this.nfa["accept"], sids).length != 0;
  };
 
- this.fa_avail_transit = function(sids) {
-  var ss = this.nfa.states, ret = new HashSet();
+ this.fa_avail_transit = function(s) {
+  return dict_keys(this.nfa.states[s]["transit"]);
+ };
+
+ this.fa_avail_transits = function(sids) {
+  var that = this, ret = new HashSet();
   sids.map(function(s) {
-   ret.addAll(dict_keys(ss[s]["transit"]));
+   ret.addAll(that.fa_avail_transit(s));
   });
   return ret.values().sort();
  };
@@ -262,7 +270,7 @@ var nfa_maker = function(nfae) {
   var z = sids_zip(cur["sids"]);
   cur["zid"] = z;
   mBase.add_zid(z, PHASE_CUR);
-  if (rBase.fa_is_accept(cur["sids"])) {
+  if (rBase.fa_are_accept(cur["sids"])) {
    mBase.nfa["accept"].push(mBase.zids[z]);
   }
 
@@ -334,13 +342,13 @@ var dfa_maker = function(nfa) {
   var rBase = this.rBase, mBase = this.mBase, cur = this.cur;
   cur["idx"] = 0;
   cur["sids"] = sids;
-  cur["cs"] = rBase.fa_avail_transit(sids);
+  cur["cs"] = rBase.fa_avail_transits(sids);
   rBase.fa_phase_states(sids, PHASE_CUR);
 
   var z = sids_zip(sids);
   cur["zid"] = z;
   mBase.add_zid(z, PHASE_CUR);
-  if (rBase.fa_is_accept(cur["sids"])) mBase.nfa["accept"].push(mBase.zids[z]);
+  if (rBase.fa_are_accept(cur["sids"])) mBase.nfa["accept"].push(mBase.zids[z]);
  };
 
  this.iter = function() {
@@ -402,12 +410,12 @@ var tom_nfa_matcher = function(nfa) {
  };
 
  this.is_match = function() {
-  return !this.cur["fail"] && this.rBase.fa_is_accept(this.cur["sids"]);
+  return !this.cur["fail"] && this.rBase.fa_are_accept(this.cur["sids"]);
  };
 
  this.can_transit = function() {
   return set_from_array(
-   this.rBase.fa_avail_transit(this.cur["sids"])
+   this.rBase.fa_avail_transits(this.cur["sids"])
   ).contains(this.str[this.cur["idx"]]);
  };
 
