@@ -88,7 +88,7 @@ var array_extract = function(arr, keys) {
  return arr.map(function(obj) { return extract(obj, keys); });
 };
 
-// Numeric id allocator.
+// Numerical id allocator.
 var id_alloc = function() {
  this.max = -1;
  this.holes = new HashSet();
