@@ -498,7 +498,7 @@ var bt_nfae_matcher = function(nfae) {
 
  this.init = function(str) {
   this.str = str;
-  this.cur = { "idx": -1, "track": [], "end": false, "fail": false };
+  this.cur = { "idx": -1, "track": [], "end": false };
   this.phase = PHASE_NEW;
   this.refresh();
  };
@@ -514,7 +514,7 @@ var bt_nfae_matcher = function(nfae) {
 
  this.is_match = function() {
   if (this.cur["idx"] == -1) return false;
-  else return !this.cur["fail"] && this.rBase.fa_is_accept(this.get_sid());
+  else return this.rBase.fa_is_accept(this.get_sid());
  };
 
  this.iter = function() {
@@ -588,7 +588,6 @@ var bt_nfae_matcher = function(nfae) {
       // Search failed.
       phase_head(PHASE_CUR);
       cur["end"] = true;
-      cur["fail"] = true;
       break;
      } else {
       phase_head(PHASE_OLD);
