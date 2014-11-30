@@ -309,15 +309,15 @@ var nfa_maker = function(nfae) {
     this.fa_ecloses(cur["sids"], PHASE_OLD);
     mBase.add_zid(cur["zid"], PHASE_OLD);
 
-    var tr1 = cur["transit"][cur["idx"]];
-    var c = tr1["c"], dest = tr1["dest"];
-    rBase.fa_phase_transit(tr1["src"], c, dest, PHASE_CUR);
+    var t = cur["transit"][cur["idx"]];
+    var c = t["c"], dest = t["dest"];
+    rBase.fa_phase_transit(t["src"], c, dest, PHASE_CUR);
     var z = sids_zip(this.fa_eclose(dest, PHASE_CUR));
     mBase.add_zid(z, PHASE_CUR);
 
-    var tr2 = mBase.nfa["states"][get_zid()]["transit"];
-    if (!dict_has(tr2, c)) tr2[c] = {};
-    tr2[c][mBase.zids[z]] = PHASE_CUR;
+    var tr = mBase.nfa["states"][get_zid()]["transit"];
+    if (!dict_has(tr, c)) tr[c] = {};
+    tr[c][mBase.zids[z]] = PHASE_CUR;
 
     ++cur["idx"];
    } else if (mBase.queue.length != 0) {
