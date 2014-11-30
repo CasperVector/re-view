@@ -119,13 +119,13 @@ var id_alloc = function() {
 
 // ID string allocator, used because javascript only allows strings as member
 // names of objects (and thus keys of dicts).
-var sid_alloc = function() {
+var sid_alloc = function(prefix) {
  this.allocator = new id_alloc;
  this.alloc = function() {
-  return this.allocator.alloc().toString();
+  return prefix + this.allocator.alloc().toString();
  };
  this.free = function(str) {
-  return this.allocator.free(parseInt(str));
+  return this.allocator.free(parseInt(str.substr(prefix.length)));
  };
 };
 

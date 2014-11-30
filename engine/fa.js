@@ -16,7 +16,7 @@ var nfae_maker = function(ast) {
  this.fas = [];
  this.xtras = [];
  this.iterAst = new iter_ast(ast);
- this.alloc = new sid_alloc();
+ this.alloc = new sid_alloc("");
  this.phase = PHASE_NEW;
 
  this.is_end = function() { return this.phase == PHASE_OLD; };
@@ -230,7 +230,7 @@ var nfa_make_base = function() {
  this.nfa = { "initial": null, "accept": [], "states": {} };
  this.zids = {};
  this.queue = [];
- this.alloc = new sid_alloc();
+ this.alloc = new sid_alloc("");
 
  // Add a state in phase `ph' for zid `z', or just mark it if existing.
  // Also add it to the queue of breadth-first traversal.
