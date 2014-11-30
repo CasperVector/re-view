@@ -568,12 +568,15 @@ var bt_nfa_matcher = function(nfa) {
     phase_head(PHASE_CUR);
    } else {
     this.refresh();
-    if (cur["idx"] >= this.str.length) {
-     phase_head(PHASE_OLD);
-     cur["end"] = true;
-    } else while (true) {
+    while (true) {
      var t = this.cur_head(1);
-     if (t["fork"] < t["transit"].length) {
+     if (cur["idx"] >= this.str.length && this.is_match()) {
+      phase_head(PHASE_OLD);
+      cur["end"] = true;
+      break;
+     } else if (
+      t["fork"] < t["transit"].length && cur["idx"] < this.str.length
+     ) {
       var f = t["transit"][t["fork"]];
       phase_head(PHASE_OLD);
       cur_push(f);
