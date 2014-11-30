@@ -477,8 +477,8 @@ var tom_nfa_matcher = function(nfa) {
  this.init("");
 };
 
-var bt_nfa_matcher = function(nfa) {
- this.rBase = new nfa_run_base(nfa);
+var bt_nfae_matcher = function(nfae) {
+ this.rBase = new nfa_run_base(nfae);
  this.str = null;
  this.cur = null;
  this.phase = null;
@@ -488,7 +488,7 @@ var bt_nfa_matcher = function(nfa) {
  this.get_snapshot = function() {
   return clone({
    "str": fmt_str(this.str, this.cur["idx"] - 1),
-   "nfa": this.rBase.nfa,
+   "nfae": this.rBase.nfa,
    "status": this.is_match()
   });
  };

@@ -41,12 +41,12 @@
  }
 
  document.write("\n");
- var matcher1 = new bt_nfa_matcher(nfa);
+ var matcher1 = new bt_nfae_matcher(nfae);
  matcher1.init(str);
  while (true) {
   var result = matcher1.iter();
   dbg1([result["str"], result["status"]]);
-  dbg1(result["nfa"]);
+  dbg1(result["nfae"]);
   if (matcher1.is_end()) break;
  }
 
