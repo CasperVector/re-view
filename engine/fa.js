@@ -266,38 +266,38 @@ var nfa_maker = function(nfae) {
   return array_from_set(ret);
  };
 
- this.prepare_cur = function(sids) {
-  var rBase = this.rBase, mBase = this.mBase, cur = this.cur;
-  cur["idx"] = 0;
-  cur["sids"] = this.fa_ecloses(sids, PHASE_CUR);
-
-  var z = sids_zip(cur["sids"]);
-  cur["zid"] = z;
-  mBase.add_zid(z, PHASE_CUR);
-  if (rBase.fa_are_accept(cur["sids"])) {
-   mBase.nfa["accept"].push(mBase.zids[z]);
-  }
-
-  var ss = rBase.nfa["states"];
-  cur["transit"] = [];
-  this.fa_ecloses(sids, PHASE_CUR).map(function(s) {
-   dict_keys(ss[s]["transit"]).map(function(c) {
-    var dests = dict_keys(ss[s]["transit"][c]);
-    if (c != "") dests.map(function(d) {
-     cur["transit"].push({ "src": s, "c": c, "dest": d });
-    });
-   });
-  });
- };
-
  this.iter = function() {
   var that = this, rBase = this.rBase, mBase = this.mBase, cur = this.cur;
+
   var get_zid = function() { return mBase.zids[cur["zid"]]; };
+
+  var prepare_cur = function(sids) {
+   cur["idx"] = 0;
+   cur["sids"] = that.fa_ecloses(sids, PHASE_CUR);
+
+   var z = sids_zip(cur["sids"]);
+   cur["zid"] = z;
+   mBase.add_zid(z, PHASE_CUR);
+   if (rBase.fa_are_accept(cur["sids"])) {
+    mBase.nfa["accept"].push(mBase.zids[z]);
+   }
+
+   var ss = rBase.nfa["states"];
+   cur["transit"] = [];
+   that.fa_ecloses(sids, PHASE_CUR).map(function(s) {
+    dict_keys(ss[s]["transit"]).map(function(c) {
+     var dests = dict_keys(ss[s]["transit"][c]);
+     if (c != "") dests.map(function(d) {
+      cur["transit"].push({ "src": s, "c": c, "dest": d });
+     });
+    });
+   });
+  };
 
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else if (mBase.nfa["initial"] == null) {
-   this.prepare_cur([rBase.nfa["initial"]]);
+   prepare_cur([rBase.nfa["initial"]]);
    mBase.nfa["initial"] = get_zid();
   } else {
    this.refresh();
@@ -317,7 +317,7 @@ var nfa_maker = function(nfae) {
 
     ++cur["idx"];
    } else if (mBase.queue.length != 0) {
-    this.prepare_cur(sids_unzip(mBase.queue.shift()));
+    prepare_cur(sids_unzip(mBase.queue.shift()));
    } else this.phase = PHASE_OLD;
   }
 
@@ -342,27 +342,27 @@ var dfa_maker = function(nfa) {
   fa_phase(this.mBase.nfa, PHASE_NEW);
  };
 
- this.prepare_cur = function(sids) {
-  var rBase = this.rBase, mBase = this.mBase, cur = this.cur;
-  cur["idx"] = 0;
-  cur["sids"] = sids;
-  cur["cs"] = rBase.fa_avail_transits(sids);
-  rBase.fa_phase_states(sids, PHASE_CUR);
-
-  var z = sids_zip(sids);
-  cur["zid"] = z;
-  mBase.add_zid(z, PHASE_CUR);
-  if (rBase.fa_are_accept(cur["sids"])) mBase.nfa["accept"].push(mBase.zids[z]);
- };
-
  this.iter = function() {
   var that = this, rBase = this.rBase, mBase = this.mBase, cur = this.cur;
+
   var get_zid = function() { return mBase.zids[cur["zid"]]; };
+
+  var prepare_cur = function(sids) {
+   cur["idx"] = 0;
+   cur["sids"] = sids;
+   cur["cs"] = rBase.fa_avail_transits(sids);
+   rBase.fa_phase_states(sids, PHASE_CUR);
+
+   var z = sids_zip(sids);
+   cur["zid"] = z;
+   mBase.add_zid(z, PHASE_CUR);
+   if (rBase.fa_are_accept(cur["sids"])) mBase.nfa["accept"].push(mBase.zids[z]);
+  };
 
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else if (mBase.nfa["initial"] == null) {
-   this.prepare_cur([rBase.nfa["initial"]]);
+   prepare_cur([rBase.nfa["initial"]]);
    mBase.nfa["initial"] = get_zid();
   } else {
    this.refresh();
@@ -380,7 +380,7 @@ var dfa_maker = function(nfa) {
 
     ++cur["idx"];
    } else if (mBase.queue.length != 0) {
-    this.prepare_cur(sids_unzip(mBase.queue.shift()));
+    prepare_cur(sids_unzip(mBase.queue.shift()));
    } else this.phase = PHASE_OLD;
   }
 
