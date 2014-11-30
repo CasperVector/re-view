@@ -205,7 +205,7 @@ var nfa_run_base = function(nfa) {
   return array_has(this.fa_avail_transits(sids), c);
  };
 
- // Do non-deterministic transititions, and mark the track.
+ // Do non-deterministic transititions and mark the tracks.
  this.fa_transit_base = function(sids, c, ph, orig) {
   var that = this, ss = this.nfa.states, ret = new HashSet();
   sids.map(function(s0) {
@@ -284,7 +284,7 @@ var nfa_maker = function(nfae) {
   var get_zid = function() { return mBase.zids[cur["zid"]]; };
 
   // Compute zid and available transitions from sids, and add state to NFA.
-  var prepare_cur = function(sids) {
+  var cur_push = function(sids) {
    cur["idx"] = 0;
    cur["sids"] = that.fa_ecloses(sids, PHASE_CUR);
 
@@ -311,7 +311,7 @@ var nfa_maker = function(nfae) {
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else if (mBase.nfa["initial"] == null) {
-   prepare_cur([rBase.nfa["initial"]]);
+   cur_push([rBase.nfa["initial"]]);
    mBase.nfa["initial"] = get_zid();
   } else {
    this.refresh();
@@ -335,7 +335,7 @@ var nfa_maker = function(nfae) {
 
     ++cur["idx"];
    } else if (mBase.queue.length != 0) {
-    prepare_cur(sids_unzip(mBase.queue.shift()));
+    cur_push(sids_unzip(mBase.queue.shift()));
    } else this.phase = PHASE_OLD;
   }
 
@@ -366,7 +366,7 @@ var dfa_maker = function(nfa) {
   var get_zid = function() { return mBase.zids[cur["zid"]]; };
 
   // Compute zid and available transitions from sids, and add state to DFA.
-  var prepare_cur = function(sids) {
+  var cur_push = function(sids) {
    cur["idx"] = 0;
    cur["sids"] = sids;
    cur["cs"] = rBase.fa_avail_transits(sids);
@@ -382,7 +382,7 @@ var dfa_maker = function(nfa) {
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else if (mBase.nfa["initial"] == null) {
-   prepare_cur([rBase.nfa["initial"]]);
+   cur_push([rBase.nfa["initial"]]);
    mBase.nfa["initial"] = get_zid();
   } else {
    this.refresh();
@@ -404,7 +404,7 @@ var dfa_maker = function(nfa) {
 
     ++cur["idx"];
    } else if (mBase.queue.length != 0) {
-    prepare_cur(sids_unzip(mBase.queue.shift()));
+    cur_push(sids_unzip(mBase.queue.shift()));
    } else this.phase = PHASE_OLD;
   }
 
