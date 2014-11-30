@@ -175,7 +175,7 @@ var nfa_run_base = function(nfa) {
  };
 
  this.fa_is_accept = function(sids) {
-  return array_and(this.nfa["accept"], sids).length > 0;
+  return array_and(this.nfa["accept"], sids).length != 0;
  };
 
  this.fa_avail_transit = function(sids) {
@@ -304,7 +304,7 @@ var nfa_maker = function(nfae) {
     tr2[c][mBase.zids[z]] = PHASE_CUR;
 
     ++cur["idx"];
-   } else if (mBase.queue.length > 0) {
+   } else if (mBase.queue.length != 0) {
     this.prepare_cur(sids_unzip(mBase.queue.shift()));
    } else this.phase = PHASE_OLD;
   }
@@ -367,7 +367,7 @@ var dfa_maker = function(nfa) {
     tr[c][mBase.zids[z]] = PHASE_CUR;
 
     ++cur["idx"];
-   } else if (mBase.queue.length > 0) {
+   } else if (mBase.queue.length != 0) {
     this.prepare_cur(sids_unzip(mBase.queue.shift()));
    } else this.phase = PHASE_OLD;
   }
