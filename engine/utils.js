@@ -42,10 +42,6 @@ var dict_keys = function(d) {
  return ret;
 };
 
-var dict_len = function(d) {
- return dict_keys(d).length;
-};
-
 // Intersection.
 var array_and = function(arr1, arr2) {
  return set_from_array(arr1).intersection(set_from_array(arr2)).values().sort(sid_cmp);
