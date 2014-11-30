@@ -308,7 +308,7 @@ var nfa_maker = function(nfae) {
     var tr1 = cur["transit"][cur["idx"]];
     var c = tr1["c"], dest = tr1["dest"];
     rBase.nfa["states"][tr1["src"]]["transit"][c][dest] = PHASE_CUR;
-    var z = sids_zip(this.fa_ecloses([dest], PHASE_CUR));
+    var z = sids_zip(this.fa_eclose(dest, PHASE_CUR));
     mBase.add_zid(z, PHASE_CUR);
 
     var tr2 = mBase.nfa["states"][get_zid()]["transit"];
