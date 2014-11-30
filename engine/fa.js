@@ -194,6 +194,10 @@ var nfa_run_base = function(nfa) {
   return ret.values().sort();
  };
 
+ this.fa_can_transit = function(sids, c) {
+  return array_has(this.fa_avail_transits(sids), c);
+ };
+
  this.fa_transit_base = function(sids, c, ph, orig) {
   var that = this, ss = this.nfa.states, ret = new HashSet();
   sids.map(function(s0) {
@@ -413,13 +417,6 @@ var tom_nfa_matcher = function(nfa) {
   return !this.cur["fail"] && this.rBase.fa_are_accept(this.cur["sids"]);
  };
 
- this.can_transit = function() {
-  return array_has(
-   this.rBase.fa_avail_transits(this.cur["sids"]),
-   this.str[this.cur["idx"]]
-  );
- };
-
  this.iter = function() {
   var rBase = this.rBase, cur = this.cur;
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
@@ -436,7 +433,9 @@ var tom_nfa_matcher = function(nfa) {
     this.refresh();
     rBase.fa_phase_states(cur["sids"], PHASE_OLD);
     if (cur["idx"] >= this.str.length) cur["end"] = true;
-    else if (!this.can_transit()) {
+    else if (!this.rBase.fa_can_transit(
+     this.cur["sids"], this.str[this.cur["idx"]])
+    ) {
      cur["end"] = true;
      cur["fail"] = true;
     } else {
