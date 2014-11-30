@@ -426,13 +426,13 @@ var tom_nfa_matcher = function(nfa) {
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else {
-   if (cur["idx"] == -1) {
+   if (cur["end"]) {
+    this.refresh();
+    this.phase = PHASE_OLD;
+   } else if (cur["idx"] == -1) {
     cur["sids"] = [rBase.nfa["initial"]];
     rBase.fa_phase_states(cur["sids"], PHASE_CUR);
     ++cur["idx"];
-   } else if (cur["end"]) {
-    this.refresh();
-    this.phase = PHASE_OLD;
    } else {
     this.refresh();
     rBase.fa_phase_states(cur["sids"], PHASE_OLD);
