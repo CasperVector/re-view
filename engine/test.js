@@ -41,7 +41,7 @@
  }
 
  document.write("\n");
- var matcher1 = new tom_nfa_matcher(nfa);
+ var matcher1 = new bt_nfa_matcher(nfa);
  matcher1.init(str);
  while (true) {
   var result = matcher1.iter();
@@ -51,13 +51,23 @@
  }
 
  document.write("\n");
- var matcher2 = new tom_nfa_matcher(dfa);
+ var matcher2 = new tom_nfa_matcher(nfa);
  matcher2.init(str);
  while (true) {
   var result = matcher2.iter();
   dbg1([result["str"], result["status"]]);
   dbg1(result["nfa"]);
   if (matcher2.is_end()) break;
+ }
+
+ document.write("\n");
+ var matcher3 = new tom_nfa_matcher(dfa);
+ matcher3.init(str);
+ while (true) {
+  var result = matcher3.iter();
+  dbg1([result["str"], result["status"]]);
+  dbg1(result["nfa"]);
+  if (matcher3.is_end()) break;
  }
 })();
 

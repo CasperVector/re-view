@@ -456,4 +456,127 @@ var tom_nfa_matcher = function(nfa) {
  this.init("");
 };
 
+var bt_nfa_matcher = function(nfa) {
+ this.rBase = new nfa_run_base(nfa);
+ this.str = null;
+ this.cur = null;
+ this.phase = null;
+
+ this.is_end = function() { return this.phase == PHASE_OLD; };
+
+ this.get_snapshot = function() {
+  return clone({
+   "str": fmt_str(this.str, this.cur["idx"] - 1),
+   "nfa": this.rBase.nfa,
+   "status": this.is_match()
+  });
+ };
+
+ this.refresh = function() { fa_phase(this.rBase.nfa, PHASE_NEW); };
+
+ this.init = function(str) {
+  this.str = str;
+  this.cur = { "idx": -1, "track": [], "end": false, "fail": false };
+  this.phase = PHASE_NEW;
+  this.refresh();
+ };
+
+ this.cur_head = function(n) {
+  var track = this.cur["track"];
+  return track[track.length - n];
+ };
+
+ this.get_sid = function() {
+  return this.cur_head(1)["sid"];
+ };
+
+ this.is_match = function() {
+  if (this.cur["idx"] == -1) return false;
+  else return !this.cur["fail"] && this.rBase.fa_is_accept(this.get_sid());
+ };
+
+ this.iter = function() {
+  var that = this, rBase = this.rBase, cur = this.cur;
+
+  var phase_head = function(ph) {
+    rBase.fa_phase_states([that.get_sid()], ph);
+  };
+
+  var phase_track = function(ph) {
+   var t1 = that.cur_head(2), t2 = that.cur_head(1);
+   rBase.fa_phase_transit(
+    t1["sid"], that.str[cur["idx"] - 1], t2["sid"], PHASE_OLD
+   );
+  };
+
+  var cur_push = function(s) {
+    cur["track"].push({ "sid": s, "fork": 0 });
+    ++cur["idx"];
+  };
+
+  var cur_pop = function() {
+    cur["track"].pop();
+    --cur["idx"];
+  };
+
+  var get_transit = function() {
+   var c = that.str[cur["idx"]], fork = that.cur_head(1)["fork"];
+   var tr = rBase.nfa["states"][that.get_sid()]["transit"], sids;
+   if (dict_has(tr, c)) var sids = dict_keys(tr[c]);
+   else return null;
+   if (fork < sids.length) return sids[fork];
+   else return null;
+  };
+
+  if (this.phase == PHASE_OLD) /* Do nothing. */ ;
+  else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
+  else {
+   if (cur["end"]) {
+    this.refresh();
+    this.phase = PHASE_OLD;
+    if (!cur["fail"]) ++cur["idx"];
+   } else if (cur["idx"] == -1) {
+    cur_push(rBase.nfa["initial"]);
+    phase_head(PHASE_CUR);
+   } else {
+    this.refresh();
+    if (cur["idx"] >= this.str.length) {
+     phase_head(PHASE_OLD);
+     cur["end"] = true;
+    } else while (true) {
+     var s = get_transit();
+     if (s != null) {
+      phase_head(PHASE_OLD);
+      cur_push(s);
+      phase_head(PHASE_CUR);
+      phase_track(PHASE_CUR);
+      break;
+     } else if (cur["idx"] < 1) {
+      phase_head(PHASE_CUR);
+      cur["end"] = true;
+      cur["fail"] = true;
+      break;
+     } else {
+      phase_head(PHASE_OLD);
+      phase_track(PHASE_OLD);
+      cur_pop();
+      ++this.cur_head(1)["fork"];
+
+      var c = that.str[cur["idx"]];
+      var tr = rBase.nfa["states"][this.get_sid()]["transit"];
+      if (dict_keys(tr[c]).length > 1) {
+       phase_head(PHASE_CUR);
+       break;
+      }
+     }
+    }
+   }
+  }
+
+  return this.get_snapshot();
+ };
+
+ this.init("");
+};
+
 // -*- indent-tabs-mode: nil -*- vim:et:ts=1:sw=1
