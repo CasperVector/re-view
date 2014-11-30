@@ -28,6 +28,10 @@ var array_from_set = function(s) {
  return s.values().sort(sid_cmp);
 };
 
+var array_has = function(arr, x) {
+ return arr.indexOf(x) != -1;
+};
+
 var dict_has = function(d, k) {
  return Object.prototype.hasOwnProperty.call(d, k);
 };

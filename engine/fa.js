@@ -175,7 +175,7 @@ var nfa_run_base = function(nfa) {
  };
 
  this.fa_is_accept = function(s) {
-  return this.nfa["accept"].indexOf(s) != -1;
+  return array_has(this.nfa["accept"], s);
  };
 
  this.fa_are_accept = function(sids) {
@@ -414,9 +414,10 @@ var tom_nfa_matcher = function(nfa) {
  };
 
  this.can_transit = function() {
-  return set_from_array(
-   this.rBase.fa_avail_transits(this.cur["sids"])
-  ).contains(this.str[this.cur["idx"]]);
+  return array_has(
+   this.rBase.fa_avail_transits(this.cur["sids"]),
+   this.str[this.cur["idx"]]
+  );
  };
 
  this.iter = function() {
