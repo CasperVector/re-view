@@ -526,30 +526,33 @@ var bt_nfa_matcher = function(nfa) {
 
   // Set the phase of transition between the head and the one next to head.
   var phase_track = function(ph) {
-   var t1 = that.cur_head(2), t2 = that.cur_head(1);
-   rBase.fa_phase_transit(
-    t1["sid"], that.str[cur["idx"] - 1], t2["sid"], PHASE_OLD
-   );
+   var t = that.cur_head(2);
+   var f = t["transit"][t["fork"]];
+   rBase.fa_phase_transit(t["sid"], f["c"], f["dest"], ph);
   };
 
-  var cur_push = function(s) {
-    cur["track"].push({ "sid": s, "fork": 0 });
-    ++cur["idx"];
+  // Transit via f["c"] to f["dest"], and compute upcoming states.
+  var cur_push = function(f) {
+   var tr = rBase.nfa["states"][f["dest"]]["transit"];
+   var t = { "sid": f["dest"], "transit": [], "fork": 0 };
+
+   var push_transit = function(cc) {
+    if (dict_has(tr, cc)) dict_keys(tr[cc]).map(function(d) {
+     t["transit"].push({ "c": cc, "dest": d });
+    });
+   }
+
+   if (f["c"] != "") ++cur["idx"];
+   push_transit(that.str[cur["idx"]]);
+   push_transit("");
+   cur["track"].push(t);
   };
 
   var cur_pop = function() {
-    cur["track"].pop();
-    --cur["idx"];
-  };
-
-  // Get the next available transitition, or return null if not existing.
-  var get_transit = function() {
-   var c = that.str[cur["idx"]], fork = that.cur_head(1)["fork"];
-   var tr = rBase.nfa["states"][that.get_sid()]["transit"], sids;
-   if (dict_has(tr, c)) var sids = dict_keys(tr[c]);
-   else return null;
-   if (fork < sids.length) return sids[fork];
-   else return null;
+   cur["track"].pop();
+   var t = that.cur_head(1);
+   if (t["transit"][t["fork"]]["c"] != "") --cur["idx"];
+   ++t["fork"];
   };
 
   // Basically a depth-first searching from the initial state.
@@ -561,7 +564,7 @@ var bt_nfa_matcher = function(nfa) {
     this.phase = PHASE_OLD;
     if (!cur["fail"]) ++cur["idx"];
    } else if (cur["idx"] == -1) {
-    cur_push(rBase.nfa["initial"]);
+    cur_push({ "c": null, "dest": rBase.nfa["initial"] });
     phase_head(PHASE_CUR);
    } else {
     this.refresh();
@@ -569,14 +572,15 @@ var bt_nfa_matcher = function(nfa) {
      phase_head(PHASE_OLD);
      cur["end"] = true;
     } else while (true) {
-     var s = get_transit();
-     if (s != null) {
+     var t = this.cur_head(1);
+     if (t["fork"] < t["transit"].length) {
+      var f = t["transit"][t["fork"]];
       phase_head(PHASE_OLD);
-      cur_push(s);
+      cur_push(f);
       phase_head(PHASE_CUR);
       phase_track(PHASE_CUR);
       break;
-     } else if (cur["idx"] < 1) {
+     } else if (cur["track"].length < 2) {
       // Search failed.
       phase_head(PHASE_CUR);
       cur["end"] = true;
@@ -586,12 +590,9 @@ var bt_nfa_matcher = function(nfa) {
       phase_head(PHASE_OLD);
       phase_track(PHASE_OLD);
       cur_pop();
-      ++this.cur_head(1)["fork"];
 
       // Have a break on a forking state to ease view of the track.
-      var c = that.str[cur["idx"]];
-      var tr = rBase.nfa["states"][this.get_sid()]["transit"];
-      if (dict_keys(tr[c]).length > 1) {
+      if (this.cur_head(1)["transit"].length > 1) {
        phase_head(PHASE_CUR);
        break;
       }
