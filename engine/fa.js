@@ -191,7 +191,7 @@ var nfa_run_base = function(nfa) {
  };
 
  this.fa_avail_transit = function(s) {
-  return dict_keys(this.nfa.states[s]["transit"]);
+  return dict_keys(this.nfa.states[s]["transit"]).sort();
  };
 
  this.fa_avail_transits = function(sids) {
@@ -211,7 +211,7 @@ var nfa_run_base = function(nfa) {
   var that = this, ss = this.nfa.states, ret = new HashSet();
   sids.map(function(s0) {
    var tr = ss[s0]["transit"][c];
-   dict_keys(tr).map(function(s1) {
+   dict_keys(tr).sort(sid_cmp).map(function(s1) {
     ret.add(s1);
     ss[s1]["phase"] = ph;
     tr[s1] = ph;
@@ -299,8 +299,8 @@ var nfa_maker = function(nfae) {
    var ss = rBase.nfa["states"];
    cur["transit"] = [];
    that.fa_ecloses(sids, PHASE_CUR).map(function(s) {
-    dict_keys(ss[s]["transit"]).map(function(c) {
-     var dests = dict_keys(ss[s]["transit"][c]);
+    dict_keys(ss[s]["transit"]).sort().map(function(c) {
+     var dests = dict_keys(ss[s]["transit"][c]).sort(sid_cmp);
      if (c != "") dests.map(function(d) {
       cur["transit"].push({ "src": s, "c": c, "dest": d });
      });
@@ -538,7 +538,7 @@ var bt_nfae_matcher = function(nfae) {
    var t = { "sid": f["dest"], "transit": [], "fork": 0 };
 
    var push_transit = function(cc) {
-    if (dict_has(tr, cc)) dict_keys(tr[cc]).map(function(d) {
+    if (dict_has(tr, cc)) dict_keys(tr[cc]).sort(sid_cmp).map(function(d) {
      t["transit"].push({ "c": cc, "dest": d });
     });
    }
