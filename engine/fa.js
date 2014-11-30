@@ -16,7 +16,8 @@ var nfae_maker = function(ast) {
  this.fas = [];
  this.xtras = [];
  this.iterAst = new iter_ast(ast);
- this.alloc = new sid_alloc("");
+ this.alloc1 = new sid_alloc("");
+ this.alloc2 = new sid_alloc("-");
  this.phase = PHASE_NEW;
 
  this.is_end = function() { return this.phase == PHASE_OLD; };
@@ -31,8 +32,8 @@ var nfae_maker = function(ast) {
   var faex_make = function(fa, ex) { return { "fa": fa, "ex": ex }; };
 
   // Make new node.
-  var faex_node = function() {
-   var sid = that.alloc.alloc(), ss = {};
+  var faex_node = function(tmp) {
+   var sid = (tmp ? that.alloc2 : that.alloc1).alloc(), ss = {};
    ss[sid] = { "transit": {}, "phase": PHASE_CUR };
    return faex_make({
      "initial": sid,
@@ -60,18 +61,18 @@ var nfae_maker = function(ast) {
   // Connect dangling states in `faex1' to `faex2'.  The real work is done in
   // `faex', which should usually be merged from `faex1' and `faex2'.
   var faex_conn = function(faex, faex1, faex2) {
-   var dest = faex2["fa"]["initial"], dels = faex1["fa"]["accept"];
+   var dest = faex2["fa"]["initial"], tmps = faex1["fa"]["accept"];
    var ss = faex["fa"]["states"], dangle = faex["ex"]["dangle"];
    dict_keys(faex1["ex"]["dangle"]).map(function(src) {
     var dests = ss[src]["transit"][dangle[src]];
-    array_and(dict_keys(dests), dels).map(function(s) { delete dests[s]; });
+    array_and(dict_keys(dests), tmps).map(function(s) { delete dests[s]; });
     dests[dest] = PHASE_CUR;
     delete dangle[src];
    });
-   faex["fa"]["accept"] = array_minus(faex["fa"]["accept"], dels);
-   dels.map(function(s) {
+   faex["fa"]["accept"] = array_minus(faex["fa"]["accept"], tmps);
+   tmps.map(function(s) {
     delete ss[s];
-    that.alloc.free(s);
+    that.alloc2.free(s);
    });
   };
 
@@ -87,7 +88,7 @@ var nfae_maker = function(ast) {
 
   // Make a forking state with `c' transits to `faex's.
   var faex_fork = function(c, faexs) {
-   var fork = faex_node();
+   var fork = faex_node(false);
    var tr = fork["fa"]["states"][fork["fa"]["initial"]]["transit"];
    fork["fa"]["accept"] = [];
    tr[c] = {};
@@ -127,7 +128,7 @@ var nfae_maker = function(ast) {
      if (dict_keys(faex["fa"]["states"]).length == 1) {
       faex["ex"]["dangle"] = {};
       faex_push(faex);
-     } else faex_push(faex_cat([faex, faex_node()]));
+     } else faex_push(faex_cat([faex, faex_node(false)]));
      this.xtras = null;
     } else this.phase = PHASE_OLD;
    } else {
@@ -135,17 +136,17 @@ var nfae_maker = function(ast) {
     var cur = this.iterAst.visit();
     switch(cur["type"]) {
      case "chr":
-      faex_push(faex_dangle_fork(cur["info"], [faex_node()]));
+      faex_push(faex_dangle_fork(cur["info"], [faex_node(true)]));
       break;
      case "sub":
       /* Do nothing. */
       break;
      case "?":
-      faex_push(faex_dangle_fork("", [faex_pop(), faex_node()]));
+      faex_push(faex_dangle_fork("", [faex_pop(), faex_node(true)]));
       break;
      case "*":
       var ker = faex_pop();
-      var faex = faex_dangle_fork("", [ker, faex_node()]);
+      var faex = faex_dangle_fork("", [ker, faex_node(true)]);
       faex_conn(faex, ker, faex);
       faex_push(faex);
       break;
@@ -158,7 +159,7 @@ var nfae_maker = function(ast) {
       faex_push(faex_fork("", [faex1, faex2]));
       break;
      case "nil":
-      faex_push(faex_dangle_init("", faex_node()));
+      faex_push(faex_dangle_init("", faex_node(false)));
       break;
     }
    }
