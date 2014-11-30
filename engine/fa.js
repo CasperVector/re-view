@@ -563,7 +563,6 @@ var bt_nfae_matcher = function(nfae) {
    if (cur["end"]) {
     this.refresh();
     this.phase = PHASE_OLD;
-    if (!cur["fail"]) ++cur["idx"];
    } else if (cur["idx"] == -1) {
     cur_push({ "c": null, "dest": rBase.nfa["initial"] });
     phase_head(PHASE_CUR);
@@ -574,6 +573,7 @@ var bt_nfae_matcher = function(nfae) {
      if (cur["idx"] >= this.str.length && this.is_match()) {
       phase_head(PHASE_OLD);
       cur["end"] = true;
+      ++cur["idx"];
       break;
      } else if (
       t["fork"] < t["transit"].length && cur["idx"] < this.str.length
