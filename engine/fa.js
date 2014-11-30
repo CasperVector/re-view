@@ -111,6 +111,7 @@ var nfae_maker = function(ast) {
    return { "fa": that.fas.pop(), "ex": that.xtras.pop() };
   };
 
+  // Mark all automaton fragments as PHASE_NEW.
   var faex_refresh = function() {
    that.fas.map(function(fa) { fa_phase(fa, PHASE_NEW); });
   };
@@ -169,11 +170,13 @@ var nfae_maker = function(ast) {
 var nfa_run_base = function(nfa) {
  this.nfa = clone(nfa);
 
+ // Mark the phase of some states.
  this.fa_phase_states = function(sids, phase) {
   var ss = this.nfa["states"];
   sids.map(function(s) { ss[s]["phase"] = phase; });
  };
 
+ // Mark the phase of one transition.
  this.fa_phase_transit = function(src, c, dest, ph) {
   this.nfa["states"][src]["transit"][c][dest] = ph;
  };
@@ -202,6 +205,7 @@ var nfa_run_base = function(nfa) {
   return array_has(this.fa_avail_transits(sids), c);
  };
 
+ // Do non-deterministic transititions, and mark the track.
  this.fa_transit_base = function(sids, c, ph, orig) {
   var that = this, ss = this.nfa.states, ret = new HashSet();
   sids.map(function(s0) {
@@ -216,6 +220,7 @@ var nfa_run_base = function(nfa) {
   return ret;
  };
 
+ // Above function wrapped to return an array instead of a set.
  this.fa_transit = function(sids, c, ph) {
   return array_from_set(this.fa_transit_base(sids, c, ph, false));
  };
@@ -227,6 +232,8 @@ var nfa_make_base = function() {
  this.queue = [];
  this.alloc = new sid_alloc();
 
+ // Add a state in phase `ph' for zid `z', or just mark it if existing.
+ // Also add it to the queue of breadth-first traversal.
  this.add_state = function(z, ph) {
   var ss = this.nfa["states"];
   if (!dict_has(this.zids, z)) {
@@ -249,6 +256,7 @@ var nfa_maker = function(nfae) {
   return clone({ "nfae": this.rBase.nfa, "nfa": this.mBase.nfa });
  };
 
+ // Mark NFA-e and NFA as PHASE_NEW.
  this.refresh = function() {
   fa_phase(this.rBase.nfa, PHASE_NEW);
   fa_phase(this.mBase.nfa, PHASE_NEW);
@@ -275,6 +283,7 @@ var nfa_maker = function(nfae) {
 
   var get_zid = function() { return mBase.zids[cur["zid"]]; };
 
+  // Compute zid and available transitions from sids, and add state to NFA.
   var prepare_cur = function(sids) {
    cur["idx"] = 0;
    cur["sids"] = that.fa_ecloses(sids, PHASE_CUR);
@@ -298,6 +307,7 @@ var nfa_maker = function(nfae) {
    });
   };
 
+  // Basically a breadth-first traversal from the initial state.
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else if (mBase.nfa["initial"] == null) {
@@ -306,15 +316,19 @@ var nfa_maker = function(nfae) {
   } else {
    this.refresh();
    if (cur["idx"] < cur["transit"].length) {
+    // Mark current as old.
     this.fa_ecloses(cur["sids"], PHASE_OLD);
     mBase.add_state(cur["zid"], PHASE_OLD);
 
+    // Do the transitition and marking.
     var t = cur["transit"][cur["idx"]];
     var c = t["c"], dest = t["dest"];
     rBase.fa_phase_transit(t["src"], c, dest, PHASE_CUR);
     var z = sids_zip(this.fa_eclose(dest, PHASE_CUR));
+    // The queue of traversal grows here.
     mBase.add_state(z, PHASE_CUR);
 
+    // Add and mark the transitition in NFA, or just mark it if existing.
     var tr = mBase.nfa["states"][get_zid()]["transit"];
     if (!dict_has(tr, c)) tr[c] = {};
     tr[c][mBase.zids[z]] = PHASE_CUR;
@@ -351,6 +365,7 @@ var dfa_maker = function(nfa) {
 
   var get_zid = function() { return mBase.zids[cur["zid"]]; };
 
+  // Compute zid and available transitions from sids, and add state to DFA.
   var prepare_cur = function(sids) {
    cur["idx"] = 0;
    cur["sids"] = sids;
@@ -363,6 +378,7 @@ var dfa_maker = function(nfa) {
    if (rBase.fa_are_accept(cur["sids"])) mBase.nfa["accept"].push(mBase.zids[z]);
   };
 
+  // Basically a breadth-first traversal from the initial state.
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else if (mBase.nfa["initial"] == null) {
@@ -371,13 +387,17 @@ var dfa_maker = function(nfa) {
   } else {
    this.refresh();
    if (cur["idx"] < cur["cs"].length) {
+    // Mark current as old.
     rBase.fa_phase_states(cur["sids"], PHASE_OLD);
     mBase.add_state(cur["zid"], PHASE_OLD);
 
+    // Do the transitition and marking.
     var c = cur["cs"][cur["idx"]];
     var z = sids_zip(rBase.fa_transit(cur["sids"], c, PHASE_CUR));
+    // The queue of traversal grows here.
     mBase.add_state(z, PHASE_CUR);
 
+    // Add and mark the transitition in DFA.
     var tr = mBase.nfa["states"][get_zid()]["transit"];
     tr[c] = {};
     tr[c][mBase.zids[z]] = PHASE_CUR;
@@ -410,6 +430,7 @@ var tom_nfa_matcher = function(nfa) {
 
  this.refresh = function() { fa_phase(this.rBase.nfa, PHASE_NEW); };
 
+ // Set the string to match.
  this.init = function(str) {
   this.str = str;
   this.cur = { "idx": -1, "sids": [], "end": false, "fail": false };
@@ -498,10 +519,12 @@ var bt_nfa_matcher = function(nfa) {
  this.iter = function() {
   var that = this, rBase = this.rBase, cur = this.cur;
 
+  // Set the phase of the stack head.
   var phase_head = function(ph) {
     rBase.fa_phase_states([that.get_sid()], ph);
   };
 
+  // Set the phase of transition between the head and the one next to head.
   var phase_track = function(ph) {
    var t1 = that.cur_head(2), t2 = that.cur_head(1);
    rBase.fa_phase_transit(
@@ -519,6 +542,7 @@ var bt_nfa_matcher = function(nfa) {
     --cur["idx"];
   };
 
+  // Get the next available transitition, or return null if not existing.
   var get_transit = function() {
    var c = that.str[cur["idx"]], fork = that.cur_head(1)["fork"];
    var tr = rBase.nfa["states"][that.get_sid()]["transit"], sids;
@@ -528,6 +552,7 @@ var bt_nfa_matcher = function(nfa) {
    else return null;
   };
 
+  // Basically a depth-first searching from the initial state.
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else {
@@ -552,6 +577,7 @@ var bt_nfa_matcher = function(nfa) {
       phase_track(PHASE_CUR);
       break;
      } else if (cur["idx"] < 1) {
+      // Search failed.
       phase_head(PHASE_CUR);
       cur["end"] = true;
       cur["fail"] = true;
@@ -562,6 +588,7 @@ var bt_nfa_matcher = function(nfa) {
       cur_pop();
       ++this.cur_head(1)["fork"];
 
+      // Have a break on a forking state to ease view of the track.
       var c = that.str[cur["idx"]];
       var tr = rBase.nfa["states"][this.get_sid()]["transit"];
       if (dict_keys(tr[c]).length > 1) {
