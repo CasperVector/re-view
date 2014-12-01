@@ -87,7 +87,8 @@ var nfae_maker = function(ast) {
   };
 
   // Make a forking state with `c' transits to `faex's.
-  var faex_fork = function(c, fork, faexs) {
+  var faex_fork = function(c, faexs) {
+   var fork = faex_node(false);
    var tr = fork["fa"]["states"][fork["fa"]["initial"]]["transit"];
    fork["fa"]["accept"] = [];
    tr[c] = {};
@@ -96,8 +97,8 @@ var nfae_maker = function(ast) {
   };
 
   // Make a dangled forking state.
-  var faex_dangle_fork = function(faexs) {
-   return faex_dangle_init("", faex_fork("", faex_node(false), faexs));
+  var faex_dangle_fork = function(c, faexs) {
+   return faex_dangle_init(c, faex_fork(c, faexs));
   };
 
   var faex_push = function(faex) {
@@ -133,20 +134,17 @@ var nfae_maker = function(ast) {
     var cur = this.iterAst.visit();
     switch(cur["type"]) {
      case "chr":
-      faex_push(faex_dangle_init(
-       cur["info"],
-       faex_fork(cur["info"], faex_node(false), [faex_node(true)])
-      ));
+      faex_push(faex_dangle_fork(cur["info"], [faex_node(true)]));
       break;
      case "sub":
       /* Do nothing. */
       break;
      case "?":
-      faex_push(faex_dangle_fork([faex_pop(), faex_node(true)]));
+      faex_push(faex_dangle_fork("", [faex_pop(), faex_node(true)]));
       break;
      case "*":
       var ker = faex_pop();
-      var faex = faex_dangle_fork([ker, faex_node(true)]);
+      var faex = faex_dangle_fork("", [ker, faex_node(true)]);
       faex_conn(faex, ker, faex);
       faex_push(faex);
       break;
@@ -156,7 +154,7 @@ var nfae_maker = function(ast) {
       break;
      case "|":
       var faex2 = faex_pop(), faex1 = faex_pop();
-      faex_push(faex_fork("", faex_node(false), [faex1, faex2]));
+      faex_push(faex_fork("", [faex1, faex2]));
       break;
      case "nil":
       faex_push(faex_dangle_init("", faex_node(false)));
