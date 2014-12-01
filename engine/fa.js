@@ -123,11 +123,11 @@ var nfae_maker = function(ast) {
     faex_refresh();
     if (this.xtras != null) {
      var faex = faex_pop();
-     if (dict_keys(faex["fa"]["states"]).length == 1) {
-      faex["ex"]["dangle"] = {};
-      faex_push(faex);
-     } else faex_push(faex_cat([faex, faex_node(false)]));
+     var nil = (dict_keys(faex["fa"]["states"]).length == 1);
+     if (nil) faex_push(faex);
+     else faex_push(faex_cat([faex, faex_node(false)]));
      this.xtras = null;
+     if (nil) this.phase = PHASE_OLD;
     } else this.phase = PHASE_OLD;
    } else {
     faex_refresh();
@@ -157,7 +157,7 @@ var nfae_maker = function(ast) {
       faex_push(faex_fork("", [faex1, faex2]));
       break;
      case "nil":
-      faex_push(faex_dangle_init("", faex_node(false)));
+      faex_push(faex_node(false));
       break;
     }
    }
