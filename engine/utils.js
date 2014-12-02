@@ -135,6 +135,8 @@ var sid_cmp = function(s1, s2) {
 };
 
 // sids = ["1", "3"] -> zid = "0101", where ret[0] and ret[1] are "1".
+// Uses strings instead of big integers because javascript only support
+// machine-precision numbers.
 var sids_zip = function(sids) {
  var ret = Array(parseInt(sids[sids.length - 1]) + 2).join("0").split("");
  sids.map(function(s) { ret[parseInt(s)] = "1"; });

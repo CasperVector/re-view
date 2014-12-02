@@ -354,6 +354,7 @@ var dfa_maker = function(nfa) {
   return clone({ "nfa": this.rBase.nfa, "dfa": this.mBase.nfa });
  };
 
+ // Mark NFA and DFA as PHASE_NEW.
  this.refresh = function() {
   fa_phase(this.rBase.nfa, PHASE_NEW);
   fa_phase(this.mBase.nfa, PHASE_NEW);
@@ -427,6 +428,7 @@ var tom_nfa_matcher = function(nfa) {
   });
  };
 
+ // Mark NFA as PHASE_NEW.
  this.refresh = function() { fa_phase(this.rBase.nfa, PHASE_NEW); };
 
  // Set the string to match.
@@ -492,6 +494,7 @@ var bt_nfae_matcher = function(nfae) {
   });
  };
 
+ // Mark NFA-e as PHASE_NEW.
  this.refresh = function() { fa_phase(this.rBase.nfa, PHASE_NEW); };
 
  this.init = function(str) {
@@ -554,7 +557,7 @@ var bt_nfae_matcher = function(nfae) {
    ++t["fork"];
   };
 
-  // Basically a depth-first searching from the initial state.
+  // Basically a depth-first search from the initial state.
   if (this.phase == PHASE_OLD) /* Do nothing. */ ;
   else if (this.phase == PHASE_NEW) this.phase = PHASE_CUR;
   else {
