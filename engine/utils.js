@@ -77,12 +77,12 @@ var dict_plus = function(ds) {
  return ret;
 };
 
-// (obj, [k_1, k_2, ..., k_n]) -> obj[k_1][k2]...[k_n]
+// (obj, [k_1, k_2, ..., k_n]) -> obj[k_1][k_2]...[k_n]
 var extract = function(obj, keys) {
  return keys.reduce(function(o, k, _, __) { return o[k]; }, obj);
 };
 
-// From ([obj1, obj2, ...], keys1)
+// From ([obj1, obj2, ...], keys)
 // to [extract(obj1, keys), extract(obj2, keys), ...]
 var array_extract = function(arr, keys) {
  return arr.map(function(obj) { return extract(obj, keys); });
