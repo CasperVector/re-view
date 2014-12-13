@@ -1,10 +1,7 @@
 (function() {
  var re = "a(b*c*|c*b*)?d", str = "abcd";
-
  var ast = parser.parse(re);
- dbg1(ast);
 
- document.write("\n");
  var maker1 = new nfae_maker(ast), nfae;
  while (true) {
   var result = maker1.iter();
@@ -15,8 +12,8 @@
    break;
   }
  }
-
  document.write("\n");
+
  var maker2 = new nfa_maker(nfae), nfa;
  while (true) {
   var result = maker2.iter();
@@ -27,8 +24,8 @@
    break;
   }
  }
-
  document.write("\n");
+
  var maker3 = new dfa_maker(nfa), dfa;
  while (true) {
   var result = maker3.iter();
@@ -39,8 +36,8 @@
    break;
   }
  }
-
  document.write("\n");
+
  var matcher1 = new bt_nfae_matcher(nfae);
  matcher1.init(str);
  while (true) {
@@ -49,8 +46,8 @@
   dbg1(result["nfae"]);
   if (matcher1.is_end()) break;
  }
-
  document.write("\n");
+
  var matcher2 = new tom_nfa_matcher(nfa);
  matcher2.init(str);
  while (true) {
@@ -59,8 +56,8 @@
   dbg1(result["nfa"]);
   if (matcher2.is_end()) break;
  }
-
  document.write("\n");
+
  var matcher3 = new tom_nfa_matcher(dfa);
  matcher3.init(str);
  while (true) {
