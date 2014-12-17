@@ -28,7 +28,7 @@ var grammar = {
    [ "atom *",     "$$ = ast_node('*', [$1]);" ]
   ],
   "atom": [
-   [ "CHR",        "$$ = ast_node('chr', [], $1);" ],
+   [ "CHR",        "$$ = ast_node('chr', undefined, $1);" ],
    [ "( alt )",    "$$ = ast_node('sub', [$2]);" ]
   ]
  }
